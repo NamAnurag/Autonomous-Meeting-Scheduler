@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+*.pyc
+.env
+token.pickle
+token_calendar.pickle
+credentials.json
+node_modules/
+.next/
