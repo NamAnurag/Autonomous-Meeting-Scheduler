@@ -3,19 +3,28 @@ import pickle
 import json
 from dotenv import load_dotenv
 from openai import OpenAI
+from pydantic import BaseModel
 
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from google.auth.transport.requests import Request
 
-# 🔹 Load env
+
+# 🔹 Load environment
 load_dotenv()
-client = OpenAI()   # ✅ new correct way
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 
 
-# 🔹 Gmail auth (token saved)
+# 🔹 Pydantic Model (STRICT STRUCTURE)
+class MeetingDetails(BaseModel):
+    is_meeting: str
+    date: str
+    time: str
+
+
+# 🔹 Gmail connection
 def get_gmail_service():
     creds = None
 
@@ -37,35 +46,7 @@ def get_gmail_service():
     return build('gmail', 'v1', credentials=creds)
 
 
-# 🔹 Fallback classifier (FAST + SAFE)
-def fallback_classifier(text):
-    text = text.lower()
-
-    keywords = ["meeting", "schedule", "call", "discussion", "zoom", "meet"]
-
-    if "google account" in text or "access" in text:
-        return {
-            "is_meeting": "NO",
-            "date": "N/A",
-            "time": "N/A"
-        }
-
-    for word in keywords:
-        if word in text:
-            return {
-                "is_meeting": "YES",
-                "date": "N/A",
-                "time": "N/A"
-            }
-
-    return {
-        "is_meeting": "NO",
-        "date": "N/A",
-        "time": "N/A"
-    }
-
-
-# 🔹 AI extraction (with safety)
+# 🔹 Extract meeting details
 def extract_meeting_details(text):
     prompt = f"""
     Extract meeting details from this email.
@@ -73,36 +54,54 @@ def extract_meeting_details(text):
     Email:
     {text}
 
-    Return STRICT JSON only:
+    Return ONLY JSON:
     {{
       "is_meeting": "YES or NO",
-      "date": "...",
-      "time": "..."
+      "date": "YYYY-MM-DD or N/A",
+      "time": "HH:MM or N/A"
     }}
     """
 
     try:
-        print("Calling OpenAI...")
-
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
-            timeout=8
         )
 
-        content = response.choices[0].message.content.strip()
+        content = response.choices[0].message.content
+        content = content.strip().replace("```json", "").replace("```", "")
 
-        print("AI Response:", content)
+        data = json.loads(content)
 
-        # Try parsing JSON
-        return json.loads(content)
+        # 🔥 STRICT VALIDATION
+        validated = MeetingDetails(**data)
+
+        return validated.dict()
 
     except Exception as e:
-        print("AI FAILED → using fallback:", e)
-        return fallback_classifier(text)
+        print("ERROR:", e)
+
+        # 🔥 fallback logic
+        text_lower = text.lower()
+
+        if "interview" in text_lower or "meeting" in text_lower or "call" in text_lower:
+            fallback = {
+                "is_meeting": "YES",
+                "date": "N/A",
+                "time": "N/A"
+            }
+        else:
+            fallback = {
+                "is_meeting": "NO",
+                "date": "N/A",
+                "time": "N/A"
+            }
+
+        # 🔥 VALIDATE FALLBACK ALSO
+        return MeetingDetails(**fallback).dict()
 
 
-# 🔹 MAIN FUNCTION
+# 🔹 Read emails
 def read_emails():
     service = get_gmail_service()
 
@@ -123,3 +122,17 @@ def read_emails():
         })
 
     return email_list
+
+
+# 🔹 Reply generator
+def generate_reply(slot):
+    return f"""
+Hello,
+
+Thank you for your email.
+
+I am available at {slot}. Please let me know if this works for you.
+
+Best regards,
+AI Meeting Agent
+"""

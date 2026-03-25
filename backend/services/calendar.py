@@ -26,8 +26,7 @@ def get_calendar_service():
         with open('token_calendar.pickle', 'wb') as token:
             pickle.dump(creds, token)
 
-    service = build('calendar', 'v3', credentials=creds)
-    return service
+    return build('calendar', 'v3', credentials=creds)
 
 
 def get_free_slots():
@@ -36,60 +35,46 @@ def get_free_slots():
     now = datetime.datetime.utcnow()
     end = now + datetime.timedelta(days=1)
 
-    events_result = service.events().list(
+    events = service.events().list(
         calendarId='primary',
         timeMin=now.isoformat() + 'Z',
         timeMax=end.isoformat() + 'Z',
         singleEvents=True,
         orderBy='startTime'
-    ).execute()
+    ).execute().get('items', [])
 
-    events = events_result.get('items', [])
-
-    busy_times = []
+    busy = []
     for event in events:
         start = event['start'].get('dateTime')
         end = event['end'].get('dateTime')
-        busy_times.append((start, end))
+        busy.append((start, end))
 
-    return busy_times
+    return busy
+
 
 def suggest_slot():
     busy = get_free_slots()
 
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.utcnow().replace(minute=0, second=0)
 
-    # Try next 8 hours
-    for i in range(1, 9):
+    for i in range(1, 24):
         candidate = now + datetime.timedelta(hours=i)
 
-        hour = candidate.hour
-
-        # ❌ Avoid night time (before 9 AM or after 6 PM)
-        if hour < 9 or hour > 18:
+        if candidate.hour < 9 or candidate.hour > 18:
             continue
-
-        candidate_str = candidate.isoformat()
 
         conflict = False
 
         for start, end in busy:
             if start and end:
-                if start <= candidate_str <= end:
+                start_dt = datetime.datetime.fromisoformat(start.replace('Z', ''))
+                end_dt = datetime.datetime.fromisoformat(end.replace('Z', ''))
+
+                if start_dt <= candidate <= end_dt:
                     conflict = True
                     break
 
         if not conflict:
             return candidate.strftime("%Y-%m-%d %H:%M")
 
-    return "No free slot available"
-
-def generate_reply(slot):
-    return f"""
-Hello,
-
-I am available at {slot}. Please let me know if this time works for you.
-
-Best regards,
-AI Meeting Agent
-"""
+    return "No free slot"
