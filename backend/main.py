@@ -98,3 +98,14 @@ def run_agent(query: str):
 @app.get("/logs")
 def logs_api():
     return {"logs": get_logs()}
+
+
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)

@@ -43,6 +43,19 @@ def decide_slot(state):
 
 # 🔹 Step 3: Generate Reply
 def create_reply(state):
+    emails = state.get("emails", [])
+
+    meeting_count = sum(
+        1 for e in emails if e["details"]["is_meeting"] == "YES"
+    )
+
+    if meeting_count == 0:
+        logs.append("No meeting found → reply skipped")
+        return {
+            "reply": "",
+            "message": "No meeting request found. No follow-up email generated."
+        }
+
     try:
         reply = generate_reply(state["slot"])
         logs.append("Reply generated")
@@ -50,7 +63,10 @@ def create_reply(state):
         logs.append(f"Reply error: {str(e)}")
         reply = "Unable to generate reply"
 
-    return {"reply": reply}
+    return {
+        "reply": reply,
+        "message": "Follow-up email drafted."
+    }
 
 def reviewer(state):
     reply = state.get("reply", "")
@@ -68,10 +84,19 @@ def reviewer(state):
 # 🔹 Final Output
 def final_output(state):
     emails = state.get("emails", [])
-
     meeting_count = sum(
         1 for e in emails if e["details"]["is_meeting"] == "YES"
     )
+
+    return {
+        "output": {
+            "query": state.get("query"),
+            "emails": emails,
+            "slot": state.get("slot"),
+            "reply": state.get("reply", ""),
+            "message": state.get("message", "")
+        }
+    }
 
     return {
         "output": {
