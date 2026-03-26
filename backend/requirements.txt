@@ -14,4 +14,3 @@ SpeechRecognition
 pydub
 numpy
 requests
-EOF
