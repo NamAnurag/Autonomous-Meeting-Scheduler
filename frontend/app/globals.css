@@ -1,72 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
-/* ─── Reset ─────────────────────────────────── */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-/* ─── Base ───────────────────────────────────── */
 html, body {
-  background: #0f172a;
-  color: white;
-  font-family: Inter, Arial, Helvetica, sans-serif;
+  background: #f8faff;
+  color: #0f172a;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
 }
 
-/* ─── Scrollbar (subtle dark theme) ─────────── */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #0f172a;
-}
-::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 99px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #475569;
-}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-/* ─── Input placeholder ──────────────────────── */
-input::placeholder {
-  color: #64748b;
-  opacity: 1;
-}
+input::placeholder { color: #94a3b8; opacity: 1; }
+input:focus { outline: none; }
 
-input:focus {
-  outline: none;
-  border-color: #22c55e !important;
-  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.15) !important;
-}
+button { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+button:disabled { opacity: 0.6; cursor: not-allowed; }
 
-/* ─── Button hover lift ──────────────────────── */
-button {
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-button:hover:not(:disabled) {
-  transform: translateY(-1px);
-}
-button:active:not(:disabled) {
-  transform: translateY(0px);
-}
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
+::selection { background: rgba(99,102,241,0.2); color: #1e1b4b; }
 
-/* ─── Selection highlight ────────────────────── */
-::selection {
-  background: rgba(34, 197, 94, 0.3);
-  color: white;
-}
-
-/* ─── Pre / code blocks ──────────────────────── */
-pre {
-  font-family: "Courier New", Courier, monospace;
-}
+pre { font-family: 'Courier New', Courier, monospace; }
